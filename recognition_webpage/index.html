@@ -1,0 +1,80 @@
+<!DOCTYPE HTML>
+
+<html>
+<link rel="stylesheet" type="text/css" href="template.css" />
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+	<title>Botler</title>
+</head>
+
+<body onload="toggleRecognition();">
+
+	<header>
+		<nav>
+			<ul>
+				<li><a href=""><b>Menu</b></a></li>
+				<li><a href="">About us</a></li>
+				<li><a href="">Botler</a></li>
+				<li><a href="">Copyright</a></li>
+			</ul>
+		</nav>
+	</header>
+
+<div>
+	<section>
+
+		<header>
+			<h2>Backgroud standup meeting page</h2>
+		</header>
+		<p>Please keep this page in backgroud to performe command recognition.</p>
+		<button id="button" onclick="toggleStartStop()"></button>
+		<div style="border:dotted;padding:10px">
+		    <span id="final_span"></span>
+		    <span id="interim_span" style="color:grey"></span>
+		</div>
+		<p>NOTE: open this page on Chrome browser.</p>
+
+		<div id="info">
+          <p id="info_no_speech" style="display:none">
+            No speech was detected. You may need to adjust your <a href=
+            "//support.google.com/chrome/bin/answer.py?hl=en&amp;answer=1407892">microphone
+            settings</a>.
+          </p>
+          <p id="info_no_microphone" style="display:none">
+            No microphone was found. Ensure that a microphone is installed and that
+            <a href="//support.google.com/chrome/bin/answer.py?hl=en&amp;answer=1407892">
+            microphone settings</a> are configured correctly.
+          </p>
+          <p id="info_denied" style="display:none">
+            Permission to use microphone was denied. Click the "Allow" button above to enable your microphone.
+          </p>
+          <p id="info_blocked" style="display:none">
+            Permission to use microphone is blocked. To change, go to
+            chrome://settings/contentExceptions#media-stream
+          </p>
+          <p id="info_upgrade" style="display:none">
+            Web Speech API is not supported by this browser. Upgrade to <a href=
+            "//www.google.com/chrome">Chrome</a> version 25 or later.
+          </p>
+        </div>
+
+
+	</section>
+
+	<aside>
+		<h2>About Botler</h2>
+		<p>Botler is the scrum butler that you always desired.</p>
+	</aside>
+
+</div>
+
+	<div> <img src="./botler.png"/> </div>
+
+	<footer>
+		<p>&#169; Copyright 2016 Botler</p>
+
+	</footer>
+
+</body>
+
+</html>
