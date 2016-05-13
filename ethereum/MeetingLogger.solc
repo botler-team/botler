@@ -1,0 +1,35 @@
+contract template {
+    address owner;
+    function template() { owner = msg.sender; }
+    function kill() { if (msg.sender == owner) suicide(owner); }
+    function transferOwnership(address newAddress){ if (msg.sender == owner) owner = newAddress; }
+}
+
+contract MeetingLogger is template{
+  uint public meetingDate; /* unit timestamp */
+  string[] public participantsList;
+  mapping (uint16 => uint) public participantsIndex;
+
+  mapping (uint16 => uint16) public notesOf; /* participant hash TO speech hash */ /* NOTE: this should be public, but public mapping are not implemented yet */
+  string[] public arrayNotes; /* NOTE: this is an hack, because mapping cannot be public due to there are no public accessors implemented for it yet */
+
+  function MeetingLogger(uint _meetingDate){
+    meetingDate = _meetingDate;
+  }
+
+  function addParticipant(string _participant) public{
+    /* uint16 _participantUint16 = uint16(sha3(_participant)); */
+    participantsList.push(_participant);
+    participantsIndex[uint16(sha3(_participant))] = participantsList.length; // -1 when retrieving
+  }
+
+  function addNote(string _participant, uint index, string _note) public{
+    uint16 _participantUint16 = uint16(sha3(_participant));
+    if(participantsIndex[_participantUint16] == 0){ /* NOTE: Mappings can be seen as hashtables which are virtually initialized such that every possible key exists and is mapped to a value whose byte-representation is all zeros. */
+      addParticipant(_participant);
+    }
+    uint16 _participantMod = uint16(_participantUint16 - _participantUint16 % 10 + uint16(index)); // remove the last digit to have multiple strings
+    notesOf[_participantMod] = uint16(sha3(_note));
+    arrayNotes.push(_note);
+  }
+}
