@@ -75,6 +75,255 @@
 
 	</footer>
 
+	<script type="text/javascript">
+    /* Speech to text recognition */
+		  var commands = [
+        'butler start meeting',
+        'butler i have finished', 'butler i finished',
+        'butler schedule meeting','butler schedule a meeting', 'butler schedule new meeting'
+      ];  /* NOTE: Botler viene tradotto con Butler */
+      var recognizing;
+	    var recognition = new webkitSpeechRecognition();
+	    recognition.continuous = true;
+	    recognition.interimResults = true;
+	    recognition.lang = "en-US";
+      var timeoutID;
+      var finalSpeech = '';
+
+      var scheduleNewMeeting = function(){ //TODO:
+        //TODO: send to backend request
+
+        var text = 'Later, I will ask you further details on Slack.';
+        synthesize(text);
+      }
+
+      var getPartecipantName = function(){
+        var name = 'Jonas';
+        //TODO: receive current partecipant name that has to speak
+
+        return name;
+      }
+      var sendStartMeetingRequest = function(){
+        //TODO: send to backend request to start the meeting
+
+      }
+      var startMeeting = function(){
+        recognition.stop();
+        reset(); //reset the speech recognition
+        sendStartMeetingRequest();
+        var partecipantName = getPartecipantName();
+
+        var startMeetingTxt = 'The meeting is starting.';
+        synthesize(startMeetingTxt);
+        var startRoundTxt = partecipantName + ' is your turn to speak.';
+        synthesize(startRoundTxt);
+
+        finalSpeech = '';
+        toggleRecognition();
+      }
+
+      var speechFinished = function(){
+        var speech = finalSpeech;
+
+        finalSpeech = '';
+      }
+
+      var executeCommand = function(indexCommand){ //TODO:
+        switch (indexCommand) {
+          case 0: //start meeting
+            console.log('start meeting');
+            startMeeting();
+            break;
+          case 1: case 2: //speech is finished: require to save speech, next speech
+            console.log('speech is finished');
+            speechFinished();
+            break;
+          case 3: case 4: case 5: //schedule a meeting
+            console.log('schedule a meeting');
+            scheduleNewMeeting();
+            break;
+          default:
+
+        }
+      }
+
+      /* Return an object {strCommand: string, isCommandRecognized: boolean}, when the command is recognized strCommand='' */
+      var verifyStringForCommands = function(currentWord, strToAnalyze) {
+        var foundCommand = false;
+        var str = strToAnalyze.lowercase();
+
+        // var foundCommand = commands.includes(str); //might be removed
+        var indexCommand = Array.IndexOf(commands, str);
+        var foundCommand = indexCommand < 0;
+
+        if (foundCommand) {
+          executeCommand(indexCommand);
+          return {'', foundCommand};
+        } else {
+          return {str, foundCommand};
+        }
+      }
+
+	    var reset = function() {
+        /* NOTE: reset do not stop recognition, because it can be used also in case of error.
+         * Use recognition.stop() to stop recognition.
+         */
+	    	recognizing = false;
+	    	button.innerHTML = "Click to Speak";
+	    	console.log('Speech recognition is not active');
+	    }
+
+	    reset(); //TODO:
+	    recognition.onend = reset;
+	    // toggleRecognition(); //TODO: remove comment
+
+	    recognition.onresult = function (event) {
+	    	console.log('On result: ', event);
+	     	var final = 'Final: ';
+	     	var interim = 'Interim: ';
+	     	var commandToAnalize = '';
+
+	     	if (typeof(event.results) == 'undefined') {
+		      recognition.onend = null;
+		      recognition.stop();
+		      showInfo('info_upgrade');
+		      return ;
+		    }
+        /* Start recognition */
+        var isStartCommandRecognized = false; /* Determine if the starting command 'Butler' (Botler) is recognized */
+	     	for (var i = 0; i < event.results.length; ++i) {
+	     		if (event.results[i].final) {
+	     			final += event.results[i][0].transcript;
+	     	 	} else {
+            var newWord = event.results[i][0].transcript;
+            /* if it is false, try to recognize the starting command 'Butler' (Botler) */
+            if(!isStartCommandRecognized){
+              isStartCommandRecognized = newWord.lowercase().includes('butler');
+            }/* DO NOT USE ELSEIF */
+            /* Check command*/
+            if(isStartCommandRecognized){
+              commandToAnalize += newWord;
+              var resp = verifyStringForCommands(commandToAnalize);
+              commandToAnalize = resp.strCommand;
+              isStartCommandRecognized = !resp.isCommandRecognized; /* if the command is recognized (isCommandRecognized=true), then we have to look for a new command, so isStartCommandRecognized = false */
+            }
+	     			interim += newWord;
+	     		}
+	     	}
+        finalSpeech = String.copy(final);
+	     	final_span.innerHTML = final;
+	     	interim_span.innerHTML = interim;
+	    }
+
+	    recognition.onerror = function(event) {
+	    	console.log('Error: ', event);
+	    	if (event.error == 'no-speech') {
+		      start_img.src = '/intl/en/chrome/assets/common/images/content/mic.gif';
+		      showInfo('info_no_speech');
+		      ignore_onend = true;
+		    }
+		    if (event.error == 'audio-capture') {
+		      start_img.src = '/intl/en/chrome/assets/common/images/content/mic.gif';
+		    	showInfo('info_no_microphone');
+		      ignore_onend = true;
+		    }
+		    if (event.error == 'not-allowed') {
+		      showInfo('info_blocked');
+		      showInfo('info_denied');
+		      ignore_onend = true;
+		    }
+	    }
+
+	    function toggleRecognition() {
+	    	if(recognizing){
+		    	recognition.start();
+		      recognizing = true;
+		      button.innerHTML = 'Click to Stop';
+		      final_span.innerHTML = '';
+		      interim_span.innerHTML = '';
+		      console.log('Speech recognition is active');
+	    	}
+	    }
+
+      function startSpeechTimer(){
+        var MAX_SPEECH_MINUTES = 3;
+        var MAX_SPEECH_TIME = MAX_SPEECH_MINUTES * 60 * 1000;
+        timeoutID = setTimeout(function(){
+          /* randomly reply with one of the possible sentences */
+          var possibleSentences = [
+            'Time is up, please finish your speech.', 'Please, finish answering the three question quickly.',
+            'Please, conclude your speech as soon as possible.', 'I apologize for the interuption, but you should conclude your speech.',
+          ];
+          var randNum = Math.floor(Math.random() * (possibleSentences.length-1));
+          synthesize(possibleSentences[randNum]);
+          var askForMeetingStr = 'In case, if you want to continue an important discusion, ask me to "schedule a meeting".';
+          synthesize(askForMeetingStr);
+        }, MAX_SPEECH_TIME);
+      }
+      function stopSpeechTimer(){
+        clearTimeout(timeoutID);
+      }
+
+	    function toggleStartStop() {
+	    	if (recognizing) {
+		      recognition.stop();
+		      reset();
+	    	} else {
+		      recognition.start();
+		      recognizing = true;
+		      button.innerHTML = 'Click to Stop';
+		      final_span.innerHTML = '';
+		      interim_span.innerHTML = '';
+		      console.log('Speech recognition is active');
+	    	}
+	    }
+
+	    function showInfo(s) {
+		  	if (s) {
+		    	for (var child = info.firstChild; child; child = child.nextSibling) {
+		    	  if (child.style) {
+		    	  	child.style.display = child.id == s ? 'inline' : 'none';
+		    	  }
+		    	}
+		    	info.style.visibility = 'visible';
+		  	} else {
+    		  info.style.visibility = 'hidden';
+		  	}
+		}
+
+
+    /* Text to speech */
+    // speechSynthesis
+    var synthesize = function(text){
+      var msg = new SpeechSynthesisUtterance();
+      msg.volume = 10;
+      msg.text = text;
+      msg.rate = 0.9;
+      msg.voice = speechSynthesis.getVoices().filter(function(voice) {
+        /* voices: 'Google US English', 'Google UK English Female', 'Google UK English Male', 'native' */
+        return voice.name == 'Google US English';
+      })[0];
+
+      msg.onend = function(event) {
+        console.log('Finished in ' + event.elapsedTime + ' seconds.');
+      };
+      msg.onerror = function(err) {
+        console.log('Error speechSynthesis: ', err );
+      };
+
+      speechSynthesis.speak(msg);
+    }
+
+
+
+
+
+
+
+
+
+  </script>
+
 </body>
 
 </html>
