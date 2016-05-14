@@ -75,9 +75,10 @@
 		<p>&#169; Copyright 2016 Botler</p>
 
 	</footer>
-  <script src="//cdnjs.cloudflare.com/ajax/libs/annyang/2.4.0/annyang.min.js"></script>
+  <script src="./annyang.js"></script>
 
 	<script type="text/javascript">
+
       if (annyang) {
         // Let's define a command.
 
@@ -124,11 +125,18 @@
           finalSpeech = '';
         }
 
-        var commands = {
-          'start': startMeeting,
+        var endMeeting = function(){
+          annyang.abort();
+        }
 
-          'butler i have finished':      nextRound,
-          'butler i finished':    nextRound
+        var commands = {
+          'start (the meeting)': startMeeting,
+
+          'i am finished': nextRound,
+          'i am done': nextRound,
+
+          'end (the) meeting': endMeeting,
+          'and (the) meeting': endMeeting
           //
           // 'butler schedule meeting' : scheduleNewMeeting
           // 'butler schedule a meeting' : scheduleNewMeeting
@@ -136,11 +144,15 @@
         };
 
         annyang.addCommands(commands);
-        
+
         annyang.debug();
 
-        annyang.start();
+        annyang.start({continuous:true});
 
+        setInterval(function(){
+          final_span.innerHTML = annyang.final();
+          interim_span.innerHTML = annyang.interim();
+        }, 1000);
       }
 
 
