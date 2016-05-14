@@ -1,9 +1,9 @@
 var RtmClient = require('@slack/client').RtmClient;
 var RTM_EVENTS = require('@slack/client').RTM_EVENTS;
 var MemoryDataStore = require('@slack/client').MemoryDataStore;
+var partecipant;
 
-
-var token = "xoxb-41008753600-dYXF74jVPvm8Ay6y09sYRZvb";
+var token = "xoxb-41008753600-5pQZtKOFw3wM4GWdkw4ntLnf";
 
 var rtm = new RtmClient(token, {
 	logLevel: 'info',
@@ -14,18 +14,21 @@ var rtm = new RtmClient(token, {
 
 rtm.on(RTM_EVENTS.MESSAGE, function (message) {
   
-var user = rtm.dataStore.getUserById(message.user)
-console.log(user.name);
+
 
 if(message.text.match(/.*start meeting*/)) {
   	console.log('find start meeting on the channel: ', message.channel);
+
+  	initialize();
+  	
   	  rtm.sendMessage('Let start the meeting', message.channel, function messageSent() {
 
   });
 }
   if (message.text.match(/.*check in*/)) {
   	console.log('User checked ', message.user);
-   rtm.sendMessage('You are checked, follow this link ', message.channel, function messageSent() {
+  	addMember(message);
+    rtm.sendMessage('You are checked, follow this link ', message.channel, function messageSent() {
 	//TODO: ricevi il link
   });
 }
@@ -38,5 +41,25 @@ if (message.text.match(/.*stop*/)) {
  
 });
 
+function initialize() {
+	
+	partecipant = [];
+		
+}
+
+
+function addMember(message){
+
+	var user = rtm.dataStore.getUserById(message.user);
+	var exists = false;
+	for(var i=0; i<partecipant.length && exists==false;i++) 
+		if(partecipant[i].user==user) exists=true;
+	if(exists==false) {
+
+  	partecipant.push({user:user, channel:message.channel});
+  } else console.log("user aldready exists");
+}
+
 rtm.start();
+
 
