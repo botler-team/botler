@@ -3,7 +3,6 @@
 html {
 	margin: 0;
 	padding: 0;
-	background: #eee9df url(../images/tile1.png) center top repeat;
 }
 body {
 	width: 940px;
@@ -51,12 +50,11 @@ h1 {
 	text-transform: uppercase;
 	color: #e5b7ad;
 	padding-top: 30px ;
-	text-shadow: 1px 1px 2px #fff; 
+	text-shadow: 1px 1px 2px #fff;
 }
 aside{
 	float: left;
 	width: 30%;
-	background: url(../images/botler-bg.png) center top no-repeat;
 	margin: 0 0 20px 0;
 	padding-top: 50px;
 }
@@ -94,11 +92,11 @@ footer{
 	padding: 10px;
 	color:#200f08 ;
 	background:#ddd3bf;
-	
+
 	/*Opacity*/
-	filter:alpha(opacity=50); /* msie */  
-	-moz-opacity: 0.50; /* firefox 1.0 */  
-	-khtml-opacity: 0.50; /* webkit */  
+	filter:alpha(opacity=50); /* msie */
+	-moz-opacity: 0.50; /* firefox 1.0 */
+	-khtml-opacity: 0.50; /* webkit */
 	opacity: 0.50; /* css 3 */
 
 	/*Gradient*/
