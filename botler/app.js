@@ -8,7 +8,6 @@ var bodyParser = require('body-parser');
 var routes = require('./routes/index');
 var users = require('./routes/users');
 var activities = require('./routes/activities');
-var meeting = require('./routes/meeting');
 
 var app = express();
 
@@ -27,7 +26,6 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use('/', routes);
 app.use('/users', users);
 app.use('/activities', activities);
-app.use('/meeting', meeting);
 
 /* add here routes that colls functions */
 app.use('/users', users);
@@ -198,44 +196,42 @@ var newMeetingEth = function() {
 
 
 
-
-
 var RtmClient = require('@slack/client').RtmClient;
 var RTM_EVENTS = require('@slack/client').RTM_EVENTS;
 var MemoryDataStore = require('@slack/client').MemoryDataStore;
-partecipant=[];
+var partecipant;
 var chan = null;
 var token = "";
 
 var rtm = new RtmClient(token, {
-  logLevel: 'info',
-  dataStore: new MemoryDataStore()
+	logLevel: 'info',
+	dataStore: new MemoryDataStore()
 });
 
 rtm.on(RTM_EVENTS.MESSAGE, function (message) {
- 
-  
-  if(message.text.match(/.*start meeting*/)) {
-      console.log('find start meeting on the channel: ', message.channel);
-      chan = message.channel;
-      initialize();
 
-        rtm.sendMessage('Let start the meeting', message.channel, function messageSent() {
+
+  if(message.text.match(/.*start meeting*/)) {
+    	console.log('find start meeting on the channel: ', message.channel);
+      chan = message.channel;
+    	initialize();
+
+    	  rtm.sendMessage('Let start the meeting', message.channel, function messageSent() {
 
     });
   }
     if (message.text.match(/.*check in*/)) {
-      console.log('User checked ', message.user);
-      addMember(message);
+    	console.log('User checked ', message.user);
+    	addMember(message);
       rtm.sendMessage('You are checked, follow this link ', message.channel, function messageSent() {
-    //TODO: ricevi il link
+  	//TODO: ricevi il link
     });
   }
 
   if (message.text.match(/.*stop*/)) {
     console.log('Good Bye!');
-    rtm.sendMessage('Good Bye!', message.channel, function messageSent() {
-    //TODO: ricevi il link
+   	rtm.sendMessage('Good Bye!', message.channel, function messageSent() {
+  	//TODO: ricevi il link
     });}
 
     if (limitTalk(message) == true ){
@@ -245,7 +241,7 @@ rtm.on(RTM_EVENTS.MESSAGE, function (message) {
 });
 
 function initialize() {
-  partecipant = [];
+	partecipant = [];
 }
 
 
@@ -253,7 +249,7 @@ function addMember(message){
 
  var user = rtm.dataStore.getUserById(message.user);
  var exists = false;
- for(var i=0; i<partecipant.length && exists==false;i++) 
+ for(var i=0; i<partecipant.length && exists==false;i++)
   if(partecipant[i].user==user) exists=true;
  if(exists==false) {
    partecipant.push({user:user, channel:message.channel});
@@ -285,17 +281,12 @@ function sendM(text){
 
 
 rtm.start();
-
+//sendM('provadjhf dfljdfadfa', chan);
 
 /* Tournment manager */
-var currentUserIndex;
+var currentUserIndex = 0;
 
-getNextUser =function(){
-  console.log('next user', currentUserIndex);
-  if(currentUserIndex == undefined){
-    currentUserIndex = 0;
-    return partecipant[currentUserIndex].name;
-  }
+function getNextUser(){
   if(currentUserIndex + 1 > partecipant.length){
     return null;
   }
@@ -303,7 +294,7 @@ getNextUser =function(){
 
   //TODO: send messages on Slack
   return partecipant[currentUserIndex].name;
-};
+}
 
 function saveNotes(note){
   //TODO:
