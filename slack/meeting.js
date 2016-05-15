@@ -3,7 +3,6 @@ var RTM_EVENTS = require('@slack/client').RTM_EVENTS;
 var MemoryDataStore = require('@slack/client').MemoryDataStore;
 var partecipant;
 var chan = null;
-
 var token = "";
 
 var rtm = new RtmClient(token, {
@@ -12,6 +11,7 @@ var rtm = new RtmClient(token, {
 });
 
 rtm.on(RTM_EVENTS.MESSAGE, function (message) {
+ 
   
   if(message.text.match(/.*start meeting*/)) {
     	console.log('find start meeting on the channel: ', message.channel);
@@ -78,6 +78,7 @@ function sendM(text){
     console.log('written');
   });
 }
+
 
 
 
