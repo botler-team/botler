@@ -203,7 +203,7 @@ var RTM_EVENTS = require('@slack/client').RTM_EVENTS;
 var MemoryDataStore = require('@slack/client').MemoryDataStore;
 partecipant = [];
 var chan = null;
-var token = "xoxb-41008753600-SwhCBzDg5fdLpZzC0PH3Iwa2";
+var token = "";
 
 var rtm = new RtmClient(token, {
 	logLevel: 'info',

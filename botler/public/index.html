@@ -5,6 +5,7 @@
 <head>
 	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
 	<title>Botler</title>
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.3/jquery.min.js"></script>
 </head>
 
 <body>
@@ -88,17 +89,25 @@
           var text = 'Later, I will ask you further details on Slack.';
           synthesize(text);
         }
+				var name = null;
 
-        var nextRound = function(){ //TODO:
-          //TODO: send to backend request
-          var name = getPartecipantName();
-          if(name){
+        var nextRound = function(){
+
+					$.ajax({
+  					method: "GET",
+  					url: "/meeting/nextuser"
+					})
+  			.done(function( msg ) {
+    			name = msg
+
+					if(name){
             var text = 'It is ' + name + ' turn';
             synthesize(text);
           }else{
             var text = 'Thanks, the meeting is over';
             synthesize(text);
           }
+  			});
 
         }
         function checkTimeout() {
@@ -112,21 +121,28 @@
           // synthesize(askForMeetingStr);
         }
 
-        var timerId;
+        timerId = null;
 
-        var getPartecipantName = function(){
+        var getPartecipantName = function(callback){
           var name = 'Jonas';
-          try {
-            clearInterval(timerId);
-          } catch (err) {
-            console.log('Timer Exception', err);
-          }
-          var MAX_SPEECH_MINUTES = 1;
-          var MAX_SPEECH_TIME = MAX_SPEECH_MINUTES * 60 * 1000;
-          var timerId = setInterval(checkTimeout, MAX_SPEECH_TIME);
-          //TODO: receive current partecipant name that has to speak
 
-          return name;
+					$.ajax({
+  					method: "GET",
+  					url: "/meeting/currentuser"
+					})
+  			 .done(function( msg ) {
+		        try {
+		          clearInterval(timerId);
+		        } catch (err) {
+		          console.log('Timer Exception', err);
+		        }
+		        var MAX_SPEECH_MINUTES = 1;
+		        var MAX_SPEECH_TIME = MAX_SPEECH_MINUTES * 60 * 1000;
+		        timerId = setInterval(checkTimeout, MAX_SPEECH_TIME);
+		        //TODO: receive current partecipant name that has to speak
+
+		        callback(msg);
+					});
         }
         var sendStartMeetingRequest = function(){
           //TODO: send to backend request to start the meeting
@@ -135,14 +151,16 @@
         var startMeeting = function(){
           console.log('start   ');
           sendStartMeetingRequest();
-          var partecipantName = getPartecipantName();
+          getPartecipantName(function(name) {
+						var startMeetingTxt = 'The meeting is starting.';
+	          synthesize(startMeetingTxt);
+	          var startRoundTxt = name + ' is your turn to speak.';
+	          synthesize(startRoundTxt);
 
-          var startMeetingTxt = 'The meeting is starting.';
-          synthesize(startMeetingTxt);
-          var startRoundTxt = partecipantName + ' is your turn to speak.';
-          synthesize(startRoundTxt);
+	          finalSpeech = '';
+					});
 
-          finalSpeech = '';
+
         }
 
         var endMeeting = function(){
