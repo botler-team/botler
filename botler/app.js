@@ -8,6 +8,7 @@ var bodyParser = require('body-parser');
 var routes = require('./routes/index');
 var users = require('./routes/users');
 var activities = require('./routes/activities');
+var meeting = require('./routes/meeting');
 
 var app = express();
 
@@ -26,6 +27,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use('/', routes);
 app.use('/users', users);
 app.use('/activities', activities);
+app.use('/meeting', meeting);
 
 /* add here routes that colls functions */
 app.use('/users', users);
@@ -204,7 +206,7 @@ var MemoryDataStore = require('@slack/client').MemoryDataStore;
 var partecipant;
 var channel;
 
-var token = "";
+var token = "xoxb-41008753600-SwhCBzDg5fdLpZzC0PH3Iwa2";
 
 var rtm = new RtmClient(token, {
 	logLevel: 'info',
@@ -273,9 +275,14 @@ rtm.start();
 
 
 /* Tournment manager */
-var currentUserIndex = 0;
+var currentUserIndex;
 
-function getNextUser(){
+getNextUser =function(){
+  console.log('next user', currentUserIndex);
+  if(currentUserIndex == undefined){
+    currentUserIndex = 0;
+    return partecipant[currentUserIndex].name;
+  }
   if(currentUserIndex + 1 > partecipant.length){
     return null;
   }
@@ -283,7 +290,7 @@ function getNextUser(){
 
   //TODO: send messages on Slack
   return partecipant[currentUserIndex].name;
-}
+};
 
 function saveNotes(note){
   //TODO:
