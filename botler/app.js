@@ -10,6 +10,7 @@ var users = require('./routes/users');
 var activities = require('./routes/activities');
 var meeting = require('./routes/meeting');
 
+
 var app = express();
 
 // view engine setup
