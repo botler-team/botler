@@ -10,6 +10,7 @@ var users = require('./routes/users');
 var activities = require('./routes/activities');
 var meeting = require('./routes/meeting');
 
+
 var app = express();
 
 // view engine setup
@@ -203,7 +204,7 @@ var RTM_EVENTS = require('@slack/client').RTM_EVENTS;
 var MemoryDataStore = require('@slack/client').MemoryDataStore;
 partecipant = [];
 var chan = null;
-var token = "xoxb-41008753600-SwhCBzDg5fdLpZzC0PH3Iwa2";
+var token = "";
 
 var rtm = new RtmClient(token, {
 	logLevel: 'info',
