@@ -3,7 +3,7 @@ var RTM_EVENTS = require('@slack/client').RTM_EVENTS;
 var MemoryDataStore = require('@slack/client').MemoryDataStore;
 var partecipant;
 var chan = null;
-var token = "";
+var token = "xoxb-41008753600-1P9WH5QPvgIiQ0YSMRmoUXDx";
 
 var rtm = new RtmClient(token, {
 	logLevel: 'info',
@@ -11,8 +11,8 @@ var rtm = new RtmClient(token, {
 });
 
 rtm.on(RTM_EVENTS.MESSAGE, function (message) {
- 
-  
+
+
   if(message.text.match(/.*start meeting*/)) {
     	console.log('find start meeting on the channel: ', message.channel);
       chan = message.channel;
@@ -51,7 +51,7 @@ function addMember(message){
 
  var user = rtm.dataStore.getUserById(message.user);
  var exists = false;
- for(var i=0; i<partecipant.length && exists==false;i++) 
+ for(var i=0; i<partecipant.length && exists==false;i++)
   if(partecipant[i].user==user) exists=true;
  if(exists==false) {
    partecipant.push({user:user, channel:message.channel});
