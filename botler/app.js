@@ -9,7 +9,7 @@ var routes = require('./routes/index');
 var users = require('./routes/users');
 var activities = require('./routes/activities');
 var meeting = require('./routes/meeting');
-
+var github = require('octonode');
 
 var app = express();
 
@@ -157,6 +157,9 @@ var logNoteEth = function(user, noteString){
   }
   var username = user;
   var note = noteString;
+
+  sendM(note);
+
   // NOTE: required to slit notes in string of maximum 3500 characters to ensure that transaction do not go out of gas
   var i = 0;
   var lastCharForI = lastCharForI > note.length ? note.length: MAX_STR_LEN;
@@ -203,7 +206,7 @@ var RtmClient = require('@slack/client').RtmClient;
 var RTM_EVENTS = require('@slack/client').RTM_EVENTS;
 var MemoryDataStore = require('@slack/client').MemoryDataStore;
 partecipant = [];
-var chan = null;
+chan = null;
 var token = "";
 
 var rtm = new RtmClient(token, {
@@ -226,7 +229,9 @@ rtm.on(RTM_EVENTS.MESSAGE, function (message) {
     if (message.text.match(/.*check in*/)) {
     	console.log('User checked ', message.user);
     	addMember(message);
-      rtm.sendMessage('You are checked, follow this link ', message.channel, function messageSent() {
+      var user = rtm.dataStore.getUserById(message.user);
+      var str = 'You are checked, '.concat( user.name).concat(' follow this link: http://localhost:3000/');
+      rtm.sendMessage(str , message.channel, function messageSent() {
   	//TODO: ricevi il link
     });
   }
@@ -275,7 +280,7 @@ function limitTalk(message){
 
 
 function sendM(text){
-  rtm.sendMessage(text, chan, function messageSent() {
+  rtm.sendMessage(text, 'C170JBX8A', function messageSent() {
     console.log('written');
   });
 }
@@ -300,8 +305,25 @@ getNextUser = function(){
 
 
   //TODO: send messages on Slack
-  console.log(currentUserIndex)
-  console.log(partecipant[currentUserIndex])
+  var convertToGit = function(name){
+    switch (name) {
+      case "margenti_reply":
+      return "margentireply";
+
+      case "bdelpizzo":
+      return "bdelpizzo";
+
+      case "giako":
+      return "Giako";
+
+      case "faffola":
+      return "Faffola";
+
+    }
+  };
+  var newname = convertToGit(partecipant[currentUserIndex].user.name);
+  getGithubCommit(newname);
+  getGithubIssue(newname);
   return partecipant[currentUserIndex].user.name;
 }
 
@@ -314,7 +336,79 @@ function saveNotes(note){
     console.log(err);
   }
 }
+
 /* End Tournment manager */
 
+function sendMJ(intro, json) {
+console.log(json);
+  sendM(intro);
+
+  for (i in json) { for (key in json[i]) {
+    sendM(key + ": " + json[i][key]);}
+  }
+}
+
+/* End Tournment manager */
+function getGithubCommit(username){
+  var client = github.client();
+  var ghrepo = client.repo('botler-team/botler');
+  var commits = [];
+  var todaysDate = new Date();
+  var callback = function(err,Httpresponse,body){
+    for (i in Httpresponse){
+        var name = Httpresponse[i].committer.login;
+        var date =  new Date(Httpresponse[i].commit.committer.date);
+        var message = Httpresponse[i].commit.message
+
+        if (name == username) {
+            // Get commits from today
+            if (date.setHours(0,0,0,0) == todaysDate.setHours(0,0,0,0)){
+                commits.push({
+                    name:name,
+                    date:date,
+                    message:message
+                });
+            }
+        }
+    }
+
+    //res.json(commits);
+    sendMJ("what you did yesterday", commits);
+
+  };
+
+  ghrepo.commits(callback);
+}
+
+
+function getGithubIssue(username){
+
+  var client = github.client();
+  var ghrepo = client.repo('botler-team/botler');
+  var issues = [];
+  var todaysDate = new Date();
+  var callback = function(err,Httpresponse,body){
+      for (i in Httpresponse){
+          var name = Httpresponse[i].assignee.login;
+          var state = Httpresponse[i].state;
+          var title = Httpresponse[i].title;
+
+          if (state == 'open') {
+              if (name == username){
+                  issues.push({
+                      name:name,
+                      state:state,
+                      title:title
+                  });
+              }
+          }
+
+      }
+      //res.json(issues);
+      sendMJ("what you'll do today", issues);
+  }
+  ghrepo.issues(callback); //array of commits
+
+}
 
 module.exports = app;
