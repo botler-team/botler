@@ -101,9 +101,29 @@
           }
 
         }
+        function checkTimeout() {
+          var possibleSentences = [
+            'Time is up, please finish your speech.', 'Please, finish answering the three question quickly.',
+            'Please, conclude your speech as soon as possible.', 'I apologize for the interuption, but you should conclude your speech.',
+          ];
+          var randNum = Math.floor(Math.random() * (possibleSentences.length-1));
+          synthesize(possibleSentences[randNum]);
+          // var askForMeetingStr = 'In case, if you want to continue an important discusion, ask me to "schedule a meeting".';
+          // synthesize(askForMeetingStr);
+        }
+
+        var timerId;
 
         var getPartecipantName = function(){
           var name = 'Jonas';
+          try {
+            clearInterval(timerId);
+          } catch (err) {
+            console.log('Timer Exception', err);
+          }
+          var MAX_SPEECH_MINUTES = 1;
+          var MAX_SPEECH_TIME = MAX_SPEECH_MINUTES * 60 * 1000;
+          var timerId = setInterval(checkTimeout, MAX_SPEECH_TIME);
           //TODO: receive current partecipant name that has to speak
 
           return name;
@@ -130,7 +150,9 @@
         }
 
         var commands = {
-          'start (the meeting)': startMeeting,
+          // 'start (the meeting)': {startMeeting},
+
+          'start (the meeting)': {'regexp': /^.*start (the meeting)?.*$/, 'callback': startMeeting},
 
           'i am finished': nextRound,
           'i am done': nextRound,
