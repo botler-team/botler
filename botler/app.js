@@ -206,7 +206,7 @@ var MemoryDataStore = require('@slack/client').MemoryDataStore;
 var partecipant;
 var channel;
 
-var token = "xoxb-41008753600-SwhCBzDg5fdLpZzC0PH3Iwa2";
+var token = "";
 
 var rtm = new RtmClient(token, {
 	logLevel: 'info',
