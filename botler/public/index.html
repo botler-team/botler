@@ -92,6 +92,11 @@
 				var name = null;
 
         var nextRound = function(){
+					$.ajax({
+						method: "POST",
+						url: "/meeting",
+						data: annyang.interim()
+					});
 
 					$.ajax({
   					method: "GET",
@@ -100,7 +105,7 @@
   			.done(function( msg ) {
     			name = msg
 
-					if(name){
+					if(name != "null"){
             var text = 'It is ' + name + ' turn';
             synthesize(text);
           }else{

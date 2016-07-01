@@ -15,4 +15,11 @@ router.get('/currentuser', function(req, res, next) {
   res.json(user);
 });
 
+router.post('/', function(req, res, next) {
+  saveNotes(req.body);
+
+  res.ok();
+});
+
+
 module.exports = router;

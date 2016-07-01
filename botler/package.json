@@ -13,7 +13,9 @@
     "express": "~4.13.1",
     "jade": "~1.11.0",
     "morgan": "~1.6.1",
+    "nconf": "^0.8.4",
     "octonode": "^0.7.5",
+    "sentiment": "^1.0.6",
     "serve-favicon": "~2.3.0",
     "web3": "^0.16.0"
   }

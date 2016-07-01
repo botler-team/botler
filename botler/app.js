@@ -10,6 +10,7 @@ var users = require('./routes/users');
 var activities = require('./routes/activities');
 var meeting = require('./routes/meeting');
 var github = require('octonode');
+var sentiment = require('sentiment');
 
 var app = express();
 
@@ -303,6 +304,7 @@ getNextUser = function(){
     return null;
   }
 
+  //saveNotes();
 
   //TODO: send messages on Slack
   var convertToGit = function(name){
@@ -327,9 +329,11 @@ getNextUser = function(){
   return partecipant[currentUserIndex].user.name;
 }
 
-function saveNotes(note){
+saveNotes = function(note){
   //TODO:
-
+  sendM(partecipant[currentUserIndex].user.name.concat(note));
+  var r = sentiment(note.Interim);
+  sendM(r.Comparative > 0 ? "Everybody is happy here!" : "Ok, let's try to chill out :)");
   try{
     logNoteEth(partecipant[currentUserIndex].user.name, note);
   }catch(err){
