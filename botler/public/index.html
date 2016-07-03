@@ -95,7 +95,7 @@
 					$.ajax({
 						method: "POST",
 						url: "/meeting",
-						data: annyang.interim()
+						data: annyang.interim.replace("Interim: ", "");
 					});
 
 					$.ajax({
