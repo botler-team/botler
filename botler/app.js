@@ -11,6 +11,7 @@ var activities = require('./routes/activities');
 var meeting = require('./routes/meeting');
 var github = require('octonode');
 var sentiment = require('sentiment');
+var nconf = require('nconf');
 
 var app = express();
 
@@ -64,6 +65,8 @@ app.use(function(err, req, res, next) {
     error: {}
   });
 });
+
+nconf.argv().env();
 
 
 
@@ -208,49 +211,150 @@ var RTM_EVENTS = require('@slack/client').RTM_EVENTS;
 var MemoryDataStore = require('@slack/client').MemoryDataStore;
 partecipant = [];
 chan = null;
-var token = "";
+logMeeting = '';
+logTurn = '';
+var token = nconf.get('token');
 
 var rtm = new RtmClient(token, {
 	logLevel: 'info',
 	dataStore: new MemoryDataStore()
 });
 
-rtm.on(RTM_EVENTS.MESSAGE, function (message) {
 
+
+rtm.on(RTM_EVENTS.MESSAGE, function (message) {
 
   if(message.text.match(/.*start meeting*/)) {
     	console.log('find start meeting on the channel: ', message.channel);
       chan = message.channel;
     	initialize();
+      logMeeting = "";
+      logTurn = "";
 
-    	  rtm.sendMessage('Let start the meeting', message.channel, function messageSent() {
+    	  rtm.sendMessage(':heavy_check_mark: Let\'s start the meeting', message.channel, function messageSent() {
 
     });
   }
-    if (message.text.match(/.*check in*/)) {
+  else if (message.text.match(/.*check in*/)) {
     	console.log('User checked ', message.user);
     	addMember(message);
       var user = rtm.dataStore.getUserById(message.user);
-      var str = 'You are checked, '.concat( user.name).concat(' follow this link: http://localhost:3000/');
+      var str = ':bust_in_silhouette: You are checked, '.concat( user.name).concat(':loud_sound: For the speech interface, follow this link: http://localhost:3000/, or type "ready" when all people joined');
       rtm.sendMessage(str , message.channel, function messageSent() {
   	//TODO: ricevi il link
     });
   }
 
-  if (message.text.match(/.*stop*/)) {
+  else if (message.text.match(/.*stop*/)) {
+    try {
+      clearInterval(timerId);
+    } catch (err) {
+      console.log('Timer Exception', err);
+    }
+
     console.log('Good Bye!');
+    sendM("How the meeting went:");
+    var r = sentiment(logMeeting);
+    sendM(r.comparative > -0.5 ? "Good! Your daily Scrum rocks! :tada:" : "There are some issues in the team: try to address them in the retrospective :warning:");
    	rtm.sendMessage('Good Bye!', message.channel, function messageSent() {
   	//TODO: ricevi il link
-    });}
+    });
+  }
+
+  else if (message.text.match(/.*done*/)) {
+      try {
+        clearInterval(timerId);
+      } catch (err) {
+        console.log('Timer Exception', err);
+      }
+
+      saveNotes(logTurn);
+      logTurn = "";
+
+      var user = getNextUser();
+
+      var name = "null";
+      if (user != null) name = partecipant[currentUserIndex].user.name;
+
+      if(name != "null"){
+        var text = ':left_right_arrow: It is ' + name + ' turn';
+      }else{
+        var text = ':eject: Thanks, the meeting is over';
+      }
+
+      console.log(text);
+     	rtm.sendMessage(text, message.channel, function messageSent() {
+    	//TODO: ricevi il link
+      });
+    }
+
+    else if (message.text.match(/.*ready*/)) {
+      var checkTimeout = function() {
+          var possibleSentences = [
+            ':stopwatch: Time is up, please finish your speech.', ':stopwatch: Please, finish answering the three question quickly.',
+            ':stopwatch: Please, conclude your speech as soon as possible.', ':stopwatch: I apologize for the interruption, but you should conclude your speech.'
+          ];
+
+          var randNum = Math.floor(Math.random() * (possibleSentences.length-1));
+          rtm.sendMessage(possibleSentences[randNum] , message.channel, function messageSent() {
+            //TODO: ricevi il link
+          });
+          var askForMeetingStr = ':information_source: In case, if you want to continue an important discussion, ask me to "schedule a meeting".';
+          rtm.sendMessage(askForMeetingStr , message.channel, function messageSent() {
+            //TODO: ricevi il link
+          });
+      };
+
+      console.log('User checked ', message.user);
+      addMember(message);
+      var user = rtm.dataStore.getUserById(message.user);
+      var str = 'The meeting is starting';
+      rtm.sendMessage(str , message.channel, function messageSent() {
+        //TODO: ricevi il link
+      });
+
+      var str = partecipant[currentUserIndex].user.name + ' is your turn to speak. Type "done" when finished';
+      rtm.sendMessage(str , message.channel, function messageSent() {
+        //TODO: ricevi il link
+      });
+
+      try {
+        clearInterval(timerId);
+      } catch (err) {
+        console.log('Timer Exception', err);
+      }
+      var MAX_SPEECH_MINUTES = 1;
+      var MAX_SPEECH_TIME = MAX_SPEECH_MINUTES * 60 * 1000;
+      timerId = setInterval(checkTimeout, MAX_SPEECH_TIME);
+
+      var newname = convertToGit(partecipant[currentUserIndex].user.name);
+      getGithubCommit(newname);
+      getGithubIssue(newname);
+    }
+    else if (message.text.match(/.*schedule a meeting*/)) {
+      // TODO TamTamy creation page here
+      sendM("Book a room on Tamtamy, just click here: https://tamtamy.reply.eu/tamtamy/meetingRooms/findAllOffices.action");
+      sendM("Once a room is booked, ask me to _send invitation_ followed by room name");
+    }
+    else if (message.text.match(/.*send invitation*/)) {
+      // TODO Google Calendar code here
+      var roomName = message.text.replace("send invitation", "");
+    }
+    else {
+      logMeeting += message.text + " ";
+      logTurn += message.text + " ";
+    }
+
 
     if (limitTalk(message) == true ){
       chan = message.channel;
-      sendM("stai diventando prolisso!");
+      sendM("Don't be a mouthful! :)");
     }
 });
 
 function initialize() {
 	partecipant = [];
+  currentUserIndex = 0;
 }
 
 
@@ -269,7 +373,7 @@ function addMember(message){
 function limitTalk(message){
   var countWord = (message.text.toString().split(/.\s/)).length;
   if (countWord > 30){
-    //sendM('Stai diventando prolisso');
+    //sendM('Don\'t be a mouthful');
     console.log('Stai diventando prolisso..');
     return true;
   } else{
@@ -295,6 +399,23 @@ rtm.start();
 /* Tournment manager */
 currentUserIndex = 0;
 
+convertToGit = function(name){
+  switch (name) {
+    case "margenti_reply":
+    return "margentireply";
+
+    case "bdelpizzo":
+    return "bdelpizzo";
+
+    case "giako":
+    return "Giako";
+
+    case "faffola":
+    return "Faffola";
+
+  }
+};
+
 getNextUser = function(){
     if (partecipant.length == 0) return null;
 
@@ -304,25 +425,6 @@ getNextUser = function(){
     return null;
   }
 
-  //saveNotes();
-
-  //TODO: send messages on Slack
-  var convertToGit = function(name){
-    switch (name) {
-      case "margenti_reply":
-      return "margentireply";
-
-      case "bdelpizzo":
-      return "bdelpizzo";
-
-      case "giako":
-      return "Giako";
-
-      case "faffola":
-      return "Faffola";
-
-    }
-  };
   var newname = convertToGit(partecipant[currentUserIndex].user.name);
   getGithubCommit(newname);
   getGithubIssue(newname);
@@ -331,9 +433,9 @@ getNextUser = function(){
 
 saveNotes = function(note){
   //TODO:
-  sendM(partecipant[currentUserIndex].user.name.concat(note));
-  var r = sentiment(note.Interim);
-  sendM(r.Comparative > 0 ? "Everybody is happy here!" : "Ok, let's try to chill out :)");
+  sendM(partecipant[currentUserIndex].user.name.concat(" said: ").concat(note));
+  var r = sentiment(note);
+  sendM(r.comparative > -0.5 ? "Everybody is happy here!" : "Ok, let's try to chill out :)");
   try{
     logNoteEth(partecipant[currentUserIndex].user.name, note);
   }catch(err){
@@ -345,10 +447,10 @@ saveNotes = function(note){
 
 function sendMJ(intro, json) {
 console.log(json);
-  sendM(intro);
+  sendM(":information_source:" + intro);
 
   for (i in json) { for (key in json[i]) {
-    sendM(key + ": " + json[i][key]);}
+    sendM(":gear: " + key + ": " + json[i][key]);}
   }
 }
 
@@ -366,13 +468,14 @@ function getGithubCommit(username){
 
         if (name == username) {
             // Get commits from today
-            if (date.setHours(0,0,0,0) == todaysDate.setHours(0,0,0,0)){
+            // TODO commented for having some commits
+            //if (date.setHours(0,0,0,0) == todaysDate.setHours(0,0,0,0)){
                 commits.push({
                     name:name,
                     date:date,
                     message:message
                 });
-            }
+            //}
         }
     }
 
@@ -413,6 +516,45 @@ function getGithubIssue(username){
   }
   ghrepo.issues(callback); //array of commits
 
+}
+
+function sendInvitationGCal(room) {
+    var event = {
+    'summary': 'Botler follow-up meeting',
+    'location': 'Room: ' + room,
+    'description': 'A chance to discuss more about the project status.',
+    'start': {
+      'dateTime': '2015-05-28T09:00:00-07:00',
+      'timeZone': 'Europe/Rome'
+    },
+    'end': {
+      'dateTime': '2015-05-28T17:00:00-07:00',
+      'timeZone': 'Europe/Rome'
+    },
+    'attendees': [
+      {'email': 'gi.russo@reply.it'},
+      //{'email': 'm.argenti@reply.it'}
+    ],
+    'reminders': {
+      'useDefault': false,
+      'overrides': [
+        {'method': 'email', 'minutes': 24 * 60},
+        {'method': 'popup', 'minutes': 10},
+      ]
+    }
+  };
+
+  // calendar.events.insert({
+  //   auth: auth,
+  //   calendarId: 'primary',
+  //   resource: event,
+  // }, function(err, event) {
+  //   if (err) {
+  //     console.log('There was an error contacting the Calendar service: ' + err);
+  //     return;
+  //   }
+  //   console.log('Event created: %s', event.htmlLink);
+  // });
 }
 
 module.exports = app;
