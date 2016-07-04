@@ -255,7 +255,7 @@ rtm.on(RTM_EVENTS.MESSAGE, function (message) {
       logMeeting = "";
       logTurn = "";
 
-    	  rtm.sendMessage(':heavy_check_mark: Let\'s start the meeting', message.channel, function messageSent() {
+    	  rtm.sendMessage(':heavy_check_mark: Let\'s start the meeting. Every member must "check in"', message.channel, function messageSent() {
 
     });
   }
@@ -279,7 +279,7 @@ rtm.on(RTM_EVENTS.MESSAGE, function (message) {
     console.log('Good Bye!');
     sendM("How the meeting went:");
     var r = sentiment(logMeeting);
-    sendM(r.comparative > -0.5 ? "Good! Your daily Scrum rocks! :tada:" : "There are some issues in the team: try to address them in the retrospective :warning:");
+    sendM(r.comparative > -0.1 ? "Good! Your daily Scrum rocks! :tada:" : "There are some issues in the team: try to address them in the retrospective :warning:");
    	rtm.sendMessage('Good Bye!', message.channel, function messageSent() {
   	//TODO: ricevi il link
     });
@@ -463,7 +463,7 @@ saveNotes = function(note){
   //TODO:
   sendM(partecipant[currentUserIndex].user.name.concat(" said: ").concat(note));
   var r = sentiment(note);
-  sendM(r.comparative > -0.5 ? "Everybody is happy here!" : "Ok, let's try to chill out :)");
+  sendM(r.comparative > -0.1 ? "Everybody is happy here!" : "Ok, let's try to chill out :)");
   try{
     logNoteEth(partecipant[currentUserIndex].user.name, note);
   }catch(err){
